@@ -20,10 +20,16 @@ def _get_playlist_tracks(sp, user_id, playlist_id):
 
 
 def _get_playlist_id(sp, user_id, playlist_name):
-    playlists = sp.user_playlists(user=user_id, limit=50)
-    for item in playlists["items"]:
-        if item["name"] == playlist_name:
-            return item["id"]
+    results = sp.user_playlists(user=user_id, limit=50)
+    while True:
+        for item in results["items"]:
+            if item["name"] == playlist_name:
+                return item["id"]
+        if results["next"]:
+            results = sp.next(results)
+        else:
+            raise ValueError(f"Couldn't find playlist {playlist_name}")
+
 
 
 def get_tracks(user_id, playlist_name):
@@ -32,12 +38,13 @@ def get_tracks(user_id, playlist_name):
     sp = spotipy.Spotify(auth_manager=auth_manager)
     playlist_id = _get_playlist_id(sp, user_id, playlist_name)
     songs = _get_playlist_tracks(sp, user_id, playlist_id)
-    names = []
+    tracks = []
     for song in songs:
-        names.append(song["track"]["name"])
+        artist = song["track"]["artists"][0]["name"]
+        tracks.append((song["track"]["name"], artist))
 
-    random.shuffle(names)
-    return names
+    random.shuffle(tracks)
+    return tracks
 
 
 def play_game(tracks):
@@ -57,7 +64,8 @@ def play_game(tracks):
             start_time = datetime.datetime.now()
 
         cur_pos += 1
-        print(f"Current song: {tracks[cur_pos]}")
+        print(f"Current song: {tracks[cur_pos][0]}")
+        print(f"Artist: {tracks[cur_pos][1]}")
         result = input()
         if "d" in result:
             score += 1
@@ -72,7 +80,7 @@ def play_game(tracks):
 
 if __name__ == "__main__":
     USER_ID = "dolphonie"
-    PLAYLIST_NAME = "New Playlist"
+    PLAYLIST_NAME = "guesser subset"
 
     tracks = get_tracks(USER_ID, PLAYLIST_NAME)
     play_game(tracks)
