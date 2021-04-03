@@ -7,27 +7,11 @@ import random
 
 import spotipy
 
+
 # web console https://developer.spotify.com/console/get-current-user-playlists/
 
-user_id = "mutleythebookworm"
-playlist_name = "TBT"
-
-auth_manager = spotipy.SpotifyClientCredentials(client_id="7c8c15002eed4cb79b8b36b527427842",
-                                                client_secret="7e9ee0ea788341dda371d4e53c1b648d")
-sp = spotipy.Spotify(auth_manager=auth_manager)
-
-playlists = sp.user_playlists(user=user_id, limit=50)
-
-play_id = None
-
-for item in playlists["items"]:
-    if item["name"] == playlist_name:
-        play_id = item["id"]
-        break
-
-
-def get_playlist_tracks(username, playlist_id):
-    results = sp.user_playlist_tracks(username, playlist_id)
+def _get_playlist_tracks(sp, user_id, playlist_id):
+    results = sp.user_playlist_tracks(user_id, playlist_id)
     tracks = results['items']
     while results['next']:
         results = sp.next(results)
@@ -35,37 +19,60 @@ def get_playlist_tracks(username, playlist_id):
     return tracks
 
 
-songs = get_playlist_tracks(user_id, play_id)
-names = []
-for song in songs:
-    names.append(song["track"]["name"])
+def _get_playlist_id(sp, user_id, playlist_name):
+    playlists = sp.user_playlists(user=user_id, limit=50)
+    for item in playlists["items"]:
+        if item["name"] == playlist_name:
+            return item["id"]
 
-random.shuffle(names)
 
-cur_pos = 0
+def get_tracks(user_id, playlist_name):
+    auth_manager = spotipy.SpotifyClientCredentials(client_id="7c8c15002eed4cb79b8b36b527427842",
+                                                    client_secret="7e9ee0ea788341dda371d4e53c1b648d")
+    sp = spotipy.Spotify(auth_manager=auth_manager)
+    playlist_id = _get_playlist_id(sp, user_id, playlist_name)
+    songs = _get_playlist_tracks(sp, user_id, playlist_id)
+    names = []
+    for song in songs:
+        names.append(song["track"]["name"])
 
-score = 0
-time_limit = datetime.timedelta(0, 120)
-start_time = datetime.datetime.now() - time_limit * 2
-while True:
-    remaining_time = time_limit - (datetime.datetime.now() - start_time)
-    print(f"Time left: {remaining_time}")
-    if datetime.datetime.now() - start_time > time_limit:
-        # new game
-        print(f"Game over! Score was: {score}")
-        score = 0
-        input("Enter any text to continue")
-        start_time = datetime.datetime.now()
+    random.shuffle(names)
+    return names
 
-    cur_pos += 1
-    print(f"Current song: {names[cur_pos]}")
-    result = input()
-    if "d" in result:
-        score += 1
 
-    if "w" in result:
-        score += 1
-        continue
+def play_game(tracks):
+    cur_pos = 0
 
-    if "s" in result:
-        continue
+    score = 0
+    time_limit = datetime.timedelta(0, 120)
+    start_time = datetime.datetime.now() - time_limit * 2
+    while True:
+        remaining_time = time_limit - (datetime.datetime.now() - start_time)
+        print(f"Time left: {remaining_time}")
+        if datetime.datetime.now() - start_time > time_limit:
+            # new game
+            print(f"Game over! Score was: {score}")
+            score = 0
+            input("Enter any text to continue")
+            start_time = datetime.datetime.now()
+
+        cur_pos += 1
+        print(f"Current song: {tracks[cur_pos]}")
+        result = input()
+        if "d" in result:
+            score += 1
+
+        if "w" in result:
+            score += 1
+            continue
+
+        if "s" in result:
+            continue
+
+
+if __name__ == "__main__":
+    USER_ID = "dolphonie"
+    PLAYLIST_NAME = "New Playlist"
+
+    tracks = get_tracks(USER_ID, PLAYLIST_NAME)
+    play_game(tracks)
