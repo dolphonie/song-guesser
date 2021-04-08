@@ -38,11 +38,11 @@ def get_tracks(user_id, playlist_name):
     sp = spotipy.Spotify(auth_manager=auth_manager)
     playlist_id = _get_playlist_id(sp, user_id, playlist_name)
     songs = _get_playlist_tracks(sp, user_id, playlist_id)
-    tracks = []
+    tracks = set()
     for song in songs:
-        artist = song["track"]["artists"][0]["name"]
-        tracks.append((song["track"]["name"], artist))
-
+        artist = song["track"]["artists"][0]["name"].strip()
+        tracks.add((song["track"]["name"].strip(), artist))
+    tracks = list(tracks)
     random.shuffle(tracks)
     return tracks
 
@@ -83,4 +83,5 @@ if __name__ == "__main__":
     PLAYLIST_NAME = "guesser subset"
 
     tracks = get_tracks(USER_ID, PLAYLIST_NAME)
+    print(len(tracks))
     play_game(tracks)
