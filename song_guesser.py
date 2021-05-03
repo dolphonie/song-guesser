@@ -37,21 +37,24 @@ def get_tracks(user_id, playlist_name, use_suggestions=False):
     sp = spotipy.Spotify(auth_manager=auth_manager)
     playlist_id = _get_playlist_id(sp, user_id, playlist_name)
     songs = _get_playlist_tracks(sp, user_id, playlist_id)
-    tracks = []
+    tracks = set()
     for song in songs:
-        artist = song["track"]["artists"][0]["name"]
+        artist = song["track"]["artists"][0]["name"].strip()
         artist_id = song["track"]["artists"][0]["id"]
         track_id = song["track"]["id"]
         if not use_suggestions:
-            tracks.append((song["track"]["name"], artist))
+            tracks.add((song["track"]["name"].strip(), artist))
         else:
-            tracks.append(track_id)
+            tracks.add(track_id)
 
     if use_suggestions:
+        tracks = list(tracks)
         random.shuffle(tracks)
         recommendations = sp.recommendations(seed_tracks=tracks[:5], limit=99)
-        return [(rec["name"], rec["artists"][0]["name"]) for rec in recommendations["tracks"]]
+        return [(rec["name"].strip(), rec["artists"][0]["name"].strip()) for rec in recommendations["tracks"]]
 
+
+    tracks = list(tracks)
     random.shuffle(tracks)
     return tracks
 
@@ -91,6 +94,6 @@ if __name__ == "__main__":
     USER_ID = "dolphonie"
     PLAYLIST_NAME = "New Playlist"
     USE_SUGGESTIONS = True
-
     tracks = get_tracks(USER_ID, PLAYLIST_NAME, USE_SUGGESTIONS)
+    print(len(tracks))
     play_game(tracks)
