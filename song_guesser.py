@@ -31,8 +31,7 @@ def _get_playlist_id(sp, user_id, playlist_name):
             raise ValueError(f"Couldn't find playlist {playlist_name}")
 
 
-
-def get_tracks(user_id, playlist_name):
+def get_tracks(user_id, playlist_name, use_suggestions=False):
     auth_manager = spotipy.SpotifyClientCredentials(client_id="7c8c15002eed4cb79b8b36b527427842",
                                                     client_secret="7e9ee0ea788341dda371d4e53c1b648d")
     sp = spotipy.Spotify(auth_manager=auth_manager)
@@ -41,7 +40,17 @@ def get_tracks(user_id, playlist_name):
     tracks = []
     for song in songs:
         artist = song["track"]["artists"][0]["name"]
-        tracks.append((song["track"]["name"], artist))
+        artist_id = song["track"]["artists"][0]["id"]
+        track_id = song["track"]["id"]
+        if not use_suggestions:
+            tracks.append((song["track"]["name"], artist))
+        else:
+            tracks.append(track_id)
+
+    if use_suggestions:
+        random.shuffle(tracks)
+        recommendations = sp.recommendations(seed_tracks=tracks[:5], limit=99)
+        return [(rec["name"], rec["artists"][0]["name"]) for rec in recommendations["tracks"]]
 
     random.shuffle(tracks)
     return tracks
@@ -80,7 +89,8 @@ def play_game(tracks):
 
 if __name__ == "__main__":
     USER_ID = "dolphonie"
-    PLAYLIST_NAME = "guesser subset"
+    PLAYLIST_NAME = "New Playlist"
+    USE_SUGGESTIONS = True
 
-    tracks = get_tracks(USER_ID, PLAYLIST_NAME)
+    tracks = get_tracks(USER_ID, PLAYLIST_NAME, USE_SUGGESTIONS)
     play_game(tracks)
