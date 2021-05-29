@@ -31,7 +31,7 @@ def _get_playlist_id(sp, user_id, playlist_name):
             raise ValueError(f"Couldn't find playlist {playlist_name}")
 
 
-def get_tracks(user_id, playlist_name, use_suggestions=False):
+def get_tracks(user_id, playlist_name, use_suggestions=False, suggestion_count=None):
     auth_manager = spotipy.SpotifyClientCredentials(client_id="7c8c15002eed4cb79b8b36b527427842",
                                                     client_secret="7e9ee0ea788341dda371d4e53c1b648d")
     sp = spotipy.Spotify(auth_manager=auth_manager)
@@ -40,23 +40,27 @@ def get_tracks(user_id, playlist_name, use_suggestions=False):
     tracks = set()
     for song in songs:
         artist = song["track"]["artists"][0]["name"].strip()
-        artist_id = song["track"]["artists"][0]["id"]
         track_id = song["track"]["id"]
-        if not use_suggestions:
-            tracks.add((song["track"]["name"].strip(), artist))
-        else:
-            tracks.add(track_id)
-
-    if use_suggestions:
-        tracks = list(tracks)
-        random.shuffle(tracks)
-        recommendations = sp.recommendations(seed_tracks=tracks[:5], limit=99)
-        return [(rec["name"].strip(), rec["artists"][0]["name"].strip()) for rec in recommendations["tracks"]]
-
-
+        song_name = song["track"]["name"].strip()
+        tracks.add((track_id, song_name, artist))
     tracks = list(tracks)
     random.shuffle(tracks)
-    return tracks
+
+    if use_suggestions:
+        sugg_tracks = set()
+        assert suggestion_count is not None
+        while len(sugg_tracks) < suggestion_count:
+            random.shuffle(tracks)
+            seeds = [el[0] for el in tracks[:5]]
+            recommendations = sp.recommendations(seed_tracks=seeds, limit=99, min_popularity=50)
+            rec_list = [(rec["name"].strip(), rec["artists"][0]["name"].strip()) for rec in recommendations["tracks"]]
+            sugg_tracks.update(set(rec_list))
+
+        sugg_list = list(sugg_tracks)
+        random.shuffle(sugg_list)
+        return sugg_list
+    else:
+        return [el[1:] for el in tracks]
 
 
 def play_game(tracks):
@@ -92,8 +96,9 @@ def play_game(tracks):
 
 if __name__ == "__main__":
     USER_ID = "dolphonie"
-    PLAYLIST_NAME = "New Playlist"
-    USE_SUGGESTIONS = True
-    tracks = get_tracks(USER_ID, PLAYLIST_NAME, USE_SUGGESTIONS)
-    print(len(tracks))
+    PLAYLIST_NAME = "guesser subset"
+    USE_SUGGESTIONS = False
+    SUGGESTION_COUNT = 500
+    tracks = get_tracks(USER_ID, PLAYLIST_NAME, USE_SUGGESTIONS, SUGGESTION_COUNT)
+    print(f"Loaded {len(tracks)} tracks")
     play_game(tracks)
