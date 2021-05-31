@@ -11,10 +11,12 @@ app.config['SESSION_TYPE'] = 'filesystem'
 # app.config['SESSION_FILE_THRESHOLD'] = 1e5
 Session(app)
 
+
 def get_time():
     time_limit = datetime.timedelta(0, 120)
     remaining_time = time_limit - (datetime.datetime.now() - session["start_time"])
     return remaining_time, datetime.datetime.now() - session["start_time"] > time_limit
+
 
 def render(time_left, out):
     if not out:
@@ -70,10 +72,13 @@ def increment():
     time_left, out = get_time()
     return render(time_left, out)
 
+
 @app.route("/restart", methods=["POST", "GET"])
 def restart():
     reset_session()
     time_left, out = get_time()
     return render(time_left, out)
 
-app.run(host='localhost', port=5000)
+
+if __name__ == "__main__":
+    app.run(host='localhost', port=5000)
