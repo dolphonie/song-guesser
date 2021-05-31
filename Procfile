@@ -1,1 +1,1 @@
-web: gunicorn shadow-hunters.app:app --chdir shadow-hunters
+web: gunicorn flaskr.frontend:app --chdir flaskr
