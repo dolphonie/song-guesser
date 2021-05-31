@@ -1,2 +1,4 @@
 .idea/
 .cache
+flaskr/flask_session
+__pycache__

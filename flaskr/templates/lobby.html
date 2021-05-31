@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Song Guesser</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<h1>Song: {{song}}</h1>
+<h2>Artist: {{artist}}</h2>
+<h3>Time left: {{time_left}}</h3>
+<h3>Score: {{score}}</h3>
+
+<form method="post" action="/success">
+    <input type="submit" value="Got It!" >
+</form>
+<form method="post" action="/skip">
+    <input type="submit" value="Skip" >
+</form>
+<form method="post" action="/increment">
+    <input type="submit" value="Increment Score" >
+</form>
+
+</body>
+</html>
